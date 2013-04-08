@@ -31,10 +31,44 @@ var KeyboardController = lander.KeyboardController = function()
 
     // -1 to 1
     this.yawThrottle;
+
+    window.addEventListener("keydown", this.onKeyDown.bind(this));
+    window.addEventListener("keyup", this.onKeyUp.bind(this));
 };
 
-KeyboardController.prototype = Object.create(Object.prototype);
+KeyboardController.prototype.onKeyDown = function(ev)
+{
+    switch (ev.keyCode) {
+        case "W".charCodeAt():
+            this.throttle = 1.0;
+            break;
+        case "S".charCodeAt():
+            break;
+        case "A".charCodeAt():
+            break;
+        case "D".charCodeAt():
+            break;
+        default:
+            console.log(ev.keyCode);
+    }
+};
 
+KeyboardController.prototype.onKeyUp = function(ev)
+{
+    switch (ev.keyCode) {
+        case "W".charCodeAt():
+            this.throttle = 0.0;
+            break;
+        case "S".charCodeAt():
+            break;
+        case "A".charCodeAt():
+            break;
+        case "D".charCodeAt():
+            break;
+        default:
+            console.log(ev.keyCode);
+    }
+};
 
 
 var Lander = lander.Lander = function(space, pos)
@@ -52,13 +86,15 @@ var Lander = lander.Lander = function(space, pos)
     shape.setElasticity(0);
     shape.setFriction(0.8);
 
-/*
-    var engine = this.bodies["engine"] = new cp.Body();
-    engine.setPos(cp.v(0,0).add(pos));
-    this.constraints["engine->fuselage"] = new cp.PinJoint(
+    var engine = this.bodies["engine"] = new cp.Body(
+            0.01,
+            cp.momentForBox(0.01,1,1)
+    );
+    engine.setPos(cp.v(0,-20).add(pos));
+    this.constraints["engine->fuselage"] = new cp.PivotJoint(
             engine, fuselage,
-            cp.v(0,0), cp.v(0,0)); // TODO
-*/
+            cp.v(0,0), cp.v(0,-20)); // TODO
+
     //this.bodies["leftThruster"] = new cp.Body();
     //this.constraints["leftThruster->body"] = new cp.PinJoint(engine, body);
 
@@ -84,7 +120,9 @@ Lander.prototype.update = function(dt)
 
     //this.bodies["fuselage"].setMass(deadWeight + fuel);
 
-    //this.model["engine"].setForce(cp.v(0,this.thrust));
+    this.bodies["fuselage"].activate();
+    this.bodies["fuselage"].f = cp.v(0, 300*this.controller.throttle);
+
 
     //this.model["leftThruster"].setForce(cp.v(0,this.torque));
     //this.model["rightThruster"].setForce(cp.v(0, -this.torque));
@@ -223,6 +261,7 @@ var main = lander.main = function()
     floor.setFriction(1);
 
     var lander = new Lander(space, cp.v(250, 300));
+    lander.controller = new KeyboardController();
     var landerView = new LanderView(scene, lander);
     viewManager.addView(landerView);
 
