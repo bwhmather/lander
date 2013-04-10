@@ -12,17 +12,93 @@ if(typeof exports === 'undefined'){
 	lander = exports;
 }
 
+
+var KeyboardTracker = lander.KeyboardTracker = function()
+{
+    this._keys = {};
+    this._modifiers = {};
+
+    // Shadow callbacks in prototype with methods that bind the correct this
+    // and can be removed in destructor.
+    this._onKeyDown = this._onKeyDown.bind(this);
+    this._onKeyUp = this._onKeyUp.bind(this);
+
+    window.addEventListener("keydown", this._onKeyDown, false);
+    window.addEventListener("keyup", this._onKeyUp, false);
+};
+
+KeyboardTracker.prototype.KEY_NAMES = {
+	'up'        : 38,
+	'down'      : 40,
+	'left'      : 37,
+	'right'     : 39,
+	'space'     : 32,
+    'backspace' : 8,
+	'page-up'   : 33,
+	'page-down' : 34,
+	'tab'       : 9,
+    "escape"    : 27
+};
+
+KeyboardTracker.prototype.pressed = function(key, modifiers)
+{
+    // TODO
+    // figure out what to do with modifiers
+
+    var keyCode;
+
+    // convert key description to key code
+    if (this.KEY_NAMES.hasOwnProperty(key)) {
+        keyCode = this.KEY_NAMES[key];
+    } else if (key.length === 1) {
+        keyCode = key.toUpperCase().charCodeAt();
+    } else {
+        throw "Invalid key";
+    }
+
+    return keyCode in this._keys;
+};
+
+KeyboardTracker.prototype.destroy = function(key, modifiers)
+{
+    this._keys = this._modifiers = undefined;
+
+    window.removeEventListener("keydown", this._onKeyDown, false);
+    window.removeEventListener("keyup", this._onKeyUp, false);
+};
+
+KeyboardTracker.prototype._onKeyDown = function(ev)
+{
+    this._keys[ev.keyCode] = true;
+
+    this._modifiers["ctrl"] = ev.ctrlkey;
+    this._modifiers["alt"] = ev.altkey;
+    this._modifiers["meta"] = ev.metakey;
+    this._modifiers["shift"] = ev.shiftkey;
+};
+
+KeyboardTracker.prototype._onKeyUp = function(ev)
+{
+    delete this._keys[ev.keyCode];
+
+    this._modifiers["ctrl"] = ev.ctrlkey;
+    this._modifiers["alt"] = ev.altkey;
+    this._modifiers["meta"] = ev.metakey;
+    this._modifiers["shift"] = ev.shiftkey;
+};
+
+
 // TODO nicer solution (see main function)
 var pressedKeys = {};
 
-var KeyboardController = lander.KeyboardController = function()
+var KeyboardController = lander.KeyboardController = function(tracker)
 {
-
+    this._tracker = tracker;
 };
 
 KeyboardController.prototype.getThrottle = function()
 {
-    if ("W".charCodeAt() in pressedKeys) {
+    if (this._tracker.pressed("W")) {
         return 1.0;
     } else {
         return 0.0;
@@ -31,8 +107,8 @@ KeyboardController.prototype.getThrottle = function()
 
 KeyboardController.prototype.getPitchThrottle = function()
 {
-    return ("A".charCodeAt() in pressedKeys ? 0.0 : -1.0) +
-           ("D".charCodeAt() in pressedKeys ? 0.0 :  1.0);
+    return (this._tracker.pressed("A") ? 0.0 : -1.0) +
+           (this._tracker.pressed("D") ? 0.0 :  1.0);
 };
 
 var Lander = lander.Lander = function(space, pos)
@@ -199,7 +275,7 @@ var main = lander.main = function()
     floor.setFriction(1);
 
     var lander = new Lander(space, cp.v(0, 100));
-    lander.controller = new KeyboardController();
+    lander.controller = new KeyboardController(new KeyboardTracker());
     var landerView = new LanderView(scene, lander);
     viewManager.addView(landerView);
 
@@ -221,14 +297,6 @@ var main = lander.main = function()
     renderer.setSize( window.innerWidth, window.innerHeight );
 
     document.body.appendChild( renderer.domElement );
-
-    // TODO
-    window.addEventListener("keydown", function(ev) {
-        pressedKeys[ev.keyCode] = true;
-    });
-    window.addEventListener("keyup", function(ev) {
-        delete pressedKeys[ev.keyCode];
-    });
 
 
     var update = function() {
