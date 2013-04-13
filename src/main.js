@@ -234,21 +234,23 @@ var LanderView = lander.LanderView = function(scene, lander)
 {
     View.prototype.constructor.call(this, scene);
 
-    var geometry = new THREE.CubeGeometry(4,4,4);
-    var material = new THREE.MeshPhongMaterial({
-            ambient: 0x555555, color: 0x555555, specular: 0xffffff,
-            shininess: 50, shading: THREE.SmoothShading
-    });
-    var mesh = new THREE.Mesh(geometry, material);
+    this.fuselage = undefined;
 
-    this.fuselage = new BodyView(scene, lander.bodies["fuselage"], mesh);
+    var loader = new THREE.JSONLoader();
+    loader.load('data/lander.js', function (geometry, materials) {
+        var material = new THREE.MeshFaceMaterial(materials);
+        var mesh = new THREE.Mesh(geometry, material);
+        this.fuselage = new BodyView(scene, lander.bodies["fuselage"], mesh);
+    }.bind(this));
 }
 
 LanderView.prototype = Object.create(View.prototype);
 
 LanderView.prototype.update = function()
 {
-    this.fuselage.update();
+    if (this.fuselage) {
+        this.fuselage.update();
+    }
 }
 
 
