@@ -1,8 +1,21 @@
-all: data/lander.js data/lander.png
+BLENDER ?= blender
+CONVERT ?= gm convert
 
-data/lander.js: data/lander.blend
-	blender -b data/lander.blend -P scripts/export-js.blender.py -- data/lander.js
+MODEL_SOURCES := $(wildcard data/*.blend)
+MODELS := $(patsubst data/%.blend,data/%.js,$(MODEL_SOURCES))
 
-data/lander.png: data/lander.xcf
-	gm convert -flatten data/lander.xcf data/lander.png
+TEXTURE_SOURCES := $(wildcard data/*.xcf)
+TEXTURES := $(patsubst data/%.xcf,data/%.png,$(TEXTURE_SOURCES))
 
+.PHONY: all
+all: $(MODELS) $(TEXTURES)
+
+$(MODELS) : %.js : %.blend
+	$(BLENDER) -b $< -P scripts/export-js.blender.py -- $@
+
+$(TEXTURES) : %.png : %.xcf
+	$(CONVERT) -flatten $< $@
+
+clean:
+	rm -f $(MODELS)
+	rm -f $(TEXTURES)
