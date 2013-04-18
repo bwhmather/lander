@@ -87,10 +87,6 @@ KeyboardTracker.prototype._onKeyUp = function(ev)
     this._modifiers["shift"] = ev.shiftkey;
 };
 
-
-// TODO nicer solution (see main function)
-var pressedKeys = {};
-
 var KeyboardController = lander.KeyboardController = function(tracker)
 {
     this._tracker = tracker;
