@@ -2,20 +2,24 @@ BLENDER ?= blender
 CONVERT ?= gm convert
 
 MODEL_SOURCES := $(wildcard data/*.blend)
-MODELS := $(patsubst data/%.blend,data/%.js,$(MODEL_SOURCES))
+MODELS := $(patsubst data/%.blend,build/%.obj,$(MODEL_SOURCES))
 
 TEXTURE_SOURCES := $(wildcard data/*.xcf)
-TEXTURES := $(patsubst data/%.xcf,data/%.png,$(TEXTURE_SOURCES))
+TEXTURES := $(patsubst data/%.xcf,build/%.png,$(TEXTURE_SOURCES))
+
+DIRS := build
 
 .PHONY: all
-all: $(MODELS) $(TEXTURES)
+all: $(MODELS) $(TEXTURES) $(DIRS)
 
-$(MODELS) : %.js : %.blend
-	$(BLENDER) -b $< -P scripts/export-js.blender.py -- $@
+$(MODELS) : build/%.obj : data/%.blend build
+	$(BLENDER) -b $< -P scripts/export-obj.blender.py -- $@
 
-$(TEXTURES) : %.png : %.xcf
+$(TEXTURES) : build/%.png : data/%.xcf build
 	$(CONVERT) -flatten $< $@
 
+$(DIRS) :
+	mkdir -p $@
+
 clean:
-	rm -f $(MODELS)
-	rm -f $(TEXTURES)
+	rm -rf build

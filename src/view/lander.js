@@ -11,13 +11,11 @@ var LanderView = exports.LanderView = function(scene, lander)
     View.prototype.constructor.call(this, scene);
 
     this.fuselage = undefined;
-
-    var loader = new THREE.JSONLoader();
-    loader.load('data/lander.js', function (geometry, materials) {
-        var material = new THREE.MeshFaceMaterial(materials);
-        var mesh = new THREE.Mesh(geometry, material);
-        this.fuselage = new BodyView(scene, lander.bodies["fuselage"], mesh);
+    var loader = new THREE.OBJLoader();
+    loader.load('build/lander.obj', function (object) {
+        this.fuselage = new BodyView(scene, lander.bodies["fuselage"], object);
     }.bind(this));
+
 }
 
 LanderView.prototype = Object.create(View.prototype);
